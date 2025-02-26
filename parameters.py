@@ -1,9 +1,9 @@
 import numpy as np
 
 # hole_num: 空穴数目, layer_num: 层数, Norb: 轨道数目
-hole_num = 10
-layer_num = 2
-max_energy = 12.
+hole_num = 4
+layer_num = 1
+max_energy = 100.
 Norb = 5
 Mc = 2
 pressure_list = (0, 4, 8, 16, 29.5)
@@ -33,6 +33,7 @@ tz_b1b1 = 0.047
 if_tz_exist = 2
 reduce_s = 0
 Neval = 50
+val_num = 1
 
 if Norb == 5:
     Ni_orbs = ['d3z2r2', 'dx2y2']

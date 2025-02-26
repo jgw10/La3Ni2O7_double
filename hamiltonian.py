@@ -96,10 +96,10 @@ def set_tz(if_tz_exist, tz_a1a1, tz_b1b1):
                       ('py', 'py'): tz_b1b1,
                       ('d3z2r2', 'd3z2r2'): tz_a1a1,
                       ('dx2y2', 'dx2y2'): tz_b1b1}
-        if if_tz_exist == 1:
+        elif if_tz_exist == 1:
             tz_fac = {('d3z2r2', 'd3z2r2'): tz_a1a1,
                       ('dx2y2', 'dx2y2'): tz_b1b1}
-        if if_tz_exist == 2:
+        elif if_tz_exist == 2:
             tz_fac = {('d3z2r2', 'd3z2r2'): tz_a1a1}
         else:
             tz_fac = None
@@ -463,6 +463,7 @@ def create_tz_matrix(VS, tz_fac):
     tz_keys = tz_fac.keys()
     # 只选择被夹的那一层(含有Ni)
     z_list = range(2, 2*pam.layer_num-1, 2)
+    z_list = list(z_list)
 
     # 遍历整个态空间
     for row_idx in range(dim):
@@ -476,7 +477,7 @@ def create_tz_matrix(VS, tz_fac):
             if z in z_list and (orb, orb) in tz_keys:     # 夹层并且满足选定的轨道
                 hop_z = z - 2   # 往下一层
                 hop_hole = (x, y, hop_z, orb, s)
-                if hop_hole in state:       # 是否符合Pauli不相容原理
+                if hop_hole not in state:       # 是否符合Pauli不相容原理
                     # 将其中的一个空穴换成是跳跃后的空穴
                     hop_state = list(state)
                     hop_state[hole_idx] = hop_hole
@@ -499,8 +500,8 @@ def get_double_occ_list(VS):
     """
     找出态中有两个空穴是在同一位置
     :param VS: 态空间
-    :return: d_state_idx = {Ni0位置: [state_idx1, state_idx2, ....]...}
-    d_hole_idx, {Ni0位置: [state_idx1, state_idx2, ...]...}
+    :return: multi_d_state_idx = {Ni0位置: [state_idx1, state_idx2, ....]...}
+    multi_d_hole_idx, {Ni0位置: [state_idx1, state_idx2, ...]...}
     p_idx_pair, [(p_idx, p_pair)...]
     apz_idx_pair, [(apz_idx, apz_pair)...]
     """

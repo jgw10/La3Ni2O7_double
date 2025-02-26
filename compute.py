@@ -53,7 +53,7 @@ def compute_Aw_main(A, Uoo, Upp, ed, ep, eo, tpd, tpp, tdo, tpo):
     Hint_po = ham.create_interaction_matrix_po(VS, p_idx_pair, apz_idx_pair, Upp, Uoo)
     H = H + Hint_po
 
-    gs.get_ground_state(H, VS)
+    gs.get_ground_state(H, VS, multi_S, multi_Sz)
 
 
 if __name__ == '__main__':
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     tpd = pam.tpd_list[4]
     tpp = pam.tpp_list[4]
     tdo = pam.tdo_list[4]
-    tpo = pam.tpd_list[4]
+    tpo = pam.tpo_list[4]
     compute_Aw_main(A, Uoo, Upp, ed, ep, eo, tpd, tpp, tdo, tpo)
     t1 = time.time()
     print('compute cost time', t1-t0)
