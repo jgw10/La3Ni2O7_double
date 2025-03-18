@@ -1,4 +1,4 @@
-# La4Ni3O10_double
+# La3Ni2O7_double
 注意事项:
 1. 当layer_num = 2, hole_num = 10时, 一定得调节max_energy(cut_off)
 2. 让layer_num = 1, hole_num = 4, 5 or 6时, 可以回到单层Ni2O7, 可以和之前Ni2O9的计算结果进行对比

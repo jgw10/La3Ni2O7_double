@@ -11,7 +11,14 @@ if pam.Norb == 5:
 spin_int = {'up': 1, 'dn': 0}
 int_spin = {value: key for key, value in spin_int.items()}
 
-Ni_position = [(-1, 0, z) for z in range(2*pam.layer_num-1)] + [(1, 0, z) for z in range(2*pam.layer_num-1)]
+Ni_position = []
+Oap_position = []
+for z in range(0, 2*pam.layer_num-1, 2):
+    Ni_position.append((-1, 0, z))
+    Ni_position.append((1, 0, z))
+for z in range(1, 2*pam.layer_num-2, 2):
+    Oap_position.append((-1, 0, z))
+    Oap_position.append((1, 0, z))
 
 
 def get_unit_cell_rep(x, y, z):
