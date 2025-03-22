@@ -10,7 +10,7 @@ import ground_state as gs
 
 def compute_Aw_main(A, Uoo, Upp, ed, ep, eo, tpd, tpp, tdo, tpo):
     """
-    计算La3Ni4O10的主程序
+    计算La3Ni2O7_double的主程序
     :param A:
     :param Uoo:
     :param Upp:
@@ -99,4 +99,4 @@ if __name__ == '__main__':
     tpo = pam.tpo_list[4]
     compute_Aw_main(A, Uoo, Upp, ed, ep, eo, tpd, tpp, tdo, tpo)
     t1 = time.time()
-    print('compute cost time', t1-t0)
+    print(f'total time {(t1-t0)//60//60}h, {(t1-t0)//60%60}min, {(t1-t0)%60}s')

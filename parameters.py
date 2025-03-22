@@ -1,9 +1,9 @@
 import numpy as np
 
 # hole_num: 空穴数目, layer_num: 层数, Norb: 轨道数目
-hole_num = 4
-layer_num = 1
-max_energy = 100.
+hole_num = 10
+layer_num = 2
+energy_range = (0, 14)  # 限制能量范围, 单位 eV
 Norb = 5
 Mc = 2
 pressure_list = (0, 4, 8, 16, 29.5)
@@ -11,6 +11,8 @@ pressure_list = (0, 4, 8, 16, 29.5)
 A = 6.0
 B = 0.15
 C = 0.58
+Upp = 4.
+Uoo = 4.
 Upps = [4.0]
 Uoos = [4.0]
 

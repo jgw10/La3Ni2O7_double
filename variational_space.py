@@ -1,7 +1,8 @@
 import parameters as pam
 import lattice as lat
 import time
-from itertools import combinations
+from itertools import permutations, product, combinations
+from itertools import combinations_with_replacement as cwr
 import bisect
 
 
@@ -14,16 +15,15 @@ def get_hole_uid(hole):
     x, y, z, orb, s = hole
 
     # 依次将x, y, z, orb, s的最大个数求出来, 并作为进制
-    b_x = 2 * pam.Mc + 1
-    b_y = 2 * pam.Mc + 1
-    b_z = 2 * pam.layer_num - 1
+    b_x, b_y, b_z = lat.b_x, lat.b_y, lat.b_z
+    delta_x, delta_y = lat.delta_x, lat.delta_y
     b_orb = pam.Norb
     b_s = 2
 
     # 将x, y, z, orb, s依次转为数字
     # 保证i_x, i_y, i_z一定是非负数
-    i_x = x + pam.Mc
-    i_y = y + pam.Mc
+    i_x = x + delta_x
+    i_y = y + delta_y
     i_z = z
     # 轨道和自旋转为数字
     i_orb = lat.orb_int[orb]
@@ -50,9 +50,8 @@ def get_hole(hole_uid):
     :return: hole = ('x', 'y', 'z', 'orb', 's'), orb轨道, s自旋
     """
     # 依次将x, y, z, orb, s的最大个数求出来, 并作为进制
-    b_x = 2 * pam.Mc + 1
-    b_y = 2 * pam.Mc + 1
-    b_z = 2 * pam.layer_num - 1
+    b_x, b_y, b_z = lat.b_x, lat.b_y, lat.b_z
+    delta_x, delta_y = lat.delta_x, lat.delta_y
     b_orb = pam.Norb
     b_s = 2
 
@@ -70,8 +69,8 @@ def get_hole(hole_uid):
 
     # 将这些数转为对应的空穴信息 hole = (x, y, z, orb, s)
     # i_x, i_y减去pam.Mc
-    x = i_x - pam.Mc
-    y = i_y - pam.Mc
+    x = i_x - delta_x
+    y = i_y - delta_y
     z = i_z
     # 得到轨道和自旋信息
     orb = lat.int_orb[i_orb]
@@ -116,135 +115,54 @@ def make_state_canonical(state):
     return canonical_state, phase
 
 
-def get_state_type(state):
+def get_state_part(position_list, num_dist):
     """
-    按照Ni, 层内O, 层间O每层的数量给态分类
-    :param state: state = ((x1, y1, z1, orb1, s1), ...)
-    :return:state_type
+    根据位置和空穴的数量分布生成所有可能的态
+    :param position_list: 位置
+    :param num_dist: 空穴的数量分布
+    :return: 存储所有可能态的元组
     """
-    layer_num = pam.layer_num
-    # 统计每一层Ni, 层内O, 层间O的数量
-    Ni_num = [[0, 0] for _ in range(layer_num)]
-    O_num = [0 for _ in range(layer_num)]
-    Oap_num = [[0, 0] for _ in range(layer_num-1)]
-    for hole in state:
-        x, y, z, orb, _ = hole
-        # Ni
-        if orb in pam.Ni_orbs:      # 这里尽量用轨道来判断, 方便以后修改lattice.py
-            idx = int(z / 2)
-            if x < 0:
-                Ni_num[idx][0] += 1
-            if x > 0:
-                Ni_num[idx][1] += 1
-        # 层内O
-        if orb in pam.O_orbs:
-            idx = int(z / 2)
-            O_num[idx] += 1
-        # 层间O
-        if orb in pam.Oap_orbs:
-            idx = int((z - 1) / 2)
-            if x < 0:
-                Oap_num[idx][0] += 1
-            if x > 0:
-                Oap_num[idx][1] += 1
+    # 去除分布中数量为0
+    num_dist = [num for num in num_dist if num != 0]
+    if not num_dist:
+        return ()
+    tot_num = len(num_dist)
+    # 枚举空穴数量分布的所有可能排列
+    num_dists = permutations(num_dist)
+    num_dists = list(set(num_dists))
 
-    # 根据每一层Ni, 层内O和层间O的空穴数量, 生成态的类型
-    state_type = []
-    for idx in range(layer_num):
-        On = O_num[idx]
+    state_part_list = []
+    # 从position_list中挑出len(num_dist)个位置, 与num_dist相对应
+    for positions in combinations(position_list, tot_num):
+        for num_dist in num_dists:
+            holes_list = []
+            for i, position in enumerate(positions):
+                num = num_dist[i]
 
-        # 先根据Ni和层内O的数量生成
-        if Ni_num[idx] != [0, 0] or On != 0:
-            dL = []
-            for Ni in Ni_num[idx]:
-                if Ni != 0:
-                    dL.append(f'd{10-Ni}')
-            if On == 1:
-                dL.append('L')
-            elif On != 0:
-                dL.append(f'L{On}')
-            dL = ''.join(dL)
-            state_type.append(dL)
+                # 单个空穴的所有可能情况
+                hole_list = []
+                for orb in lat.get_unit_cell_rep(*position):
+                    for s in ['dn', 'up']:
+                        hole_list.append((*position, orb, s))
 
-        # 再根据层间O的数量生成
-        if idx < len(Oap_num):
-            if Oap_num[idx] != [0, 0]:
-                Oap_type = []
-                for Oap in Oap_num[idx]:
-                    if Oap != 0:
-                        if Oap == 1:
-                            Oap_type.append('O')
-                        else:
-                            Oap_type.append(f'O{Oap}')
-                Oap_type = ''.join(Oap_type)
-                state_type.append(Oap_type)
-    state_type = '-'.join(state_type)
+                # num个空穴的所有可能情况
+                holes_tuple = tuple(combinations(hole_list, num))
+                holes_list.append(holes_tuple)
 
-    return state_type
+            # 拼接不同部分的空穴
+            for part1 in product(*holes_list):
+                state_part = part1[0]
+                for part2 in part1[1:]:
+                    state_part += part2
+                state_part_list.append(state_part)
 
-
-def get_atomic_energy(state, A, Upp, Uoo, ep, eo):
-    """
-    大致计算该态在原子极限下的能量(以d8为基态, 设d8的能量为0)
-    :param state:state = ((x1, y1, z1, orb1, s1), ...)
-    :param A: 描述d轨道相互作用的一个参数
-    :param Upp: 描述p轨道相互作用的参数
-    :param Uoo: 描述apz轨道(层间O的pz)相互作用的参数
-    :param ep: p轨道上的在位能
-    :param eo: apz轨道上的在位能
-    :return:energy
-    """
-    energy = 0.
-    Ni_num= [[0, 0] for _ in range(pam.layer_num)]
-    O_num = {}
-    Oap_num = {}
-    for x, y, z, orb, _ in state:
-        # 计算p, apz轨道上的在位能
-        if orb in pam.O_orbs:
-            energy += ep
-        elif orb in pam.Oap_orbs:
-            energy += eo
-
-        # 统计在相同位置上的个数
-        # 并根据在Ni, 层内O, 层间O依次存入Ni_num, O_num, Oap_num
-        if orb in pam.Ni_orbs:
-            if orb in pam.Ni_orbs:
-                idx = int(z / 2)
-                if x < 0:
-                    Ni_num[idx][0] += 1
-                if x > 0:
-                    Ni_num[idx][1] += 1
-        if orb in pam.O_orbs:
-            if (x, y, z) in O_num:
-                O_num[(x, y, z)] += 1
-            else:
-                O_num[(x, y, z)] = 1
-        if orb in pam.Oap_orbs:
-            if (x, y, z) in Oap_num:
-                Oap_num[(x, y, z)] += 1
-            else:
-                Oap_num[(x, y, z)] = 1
-
-    # 只保留大于1的值
-    O_num = [num for num in O_num.values() if num > 1]
-    Oap_num = [num for num in Oap_num.values() if num > 1]
-
-    # dn的能量, 比d8高A/2 * abs(n - 8)
-    for num in Ni_num:
-        energy += A/2 * abs(num[0]-2)
-        energy += A/2 * abs(num[1]-2)
-    for num in O_num:
-        double_num = num * (num - 1) / 2
-        energy += Upp * double_num
-    for num in Oap_num:
-        double_num = num * (num - 1) / 2
-        energy += Uoo * double_num
-
-    return energy
+    return tuple(state_part_list)
 
 
 class VariationalSpace:
     def __init__(self):
+        self.b_hole = lat.b_x * lat.b_y * lat.b_z * pam.Norb * 2
+
         self.lookup_tbl = self.create_lookup_tbl()
         self.dim = len(self.lookup_tbl)
         print(f'VS.dim = {self.dim}')
@@ -255,49 +173,82 @@ class VariationalSpace:
         :return: lookup_tbl
         """
         t0 = time.time()
-        Mc = pam.Mc
-        layer_num = pam.layer_num
         hole_num = pam.hole_num
-        # 生成单个空穴的所有可能组合
-        hole_list = []
-        for x in range(-Mc, Mc+1):
-            y_max = Mc - abs(x)
-            for y in range(-y_max, y_max+1):
-                for z in range(2*layer_num-1):
-                    orbs = lat.get_unit_cell_rep(x, y, z)
-                    if orbs == ['NotOnSublattice'] or orbs is None:
-                        continue
-                    for orb in orbs:
-                        for s in ['dn', 'up']:
-                            hole_list.append((x, y, z, orb, s))
 
-        # 生成所有可能组合的态, 并分类型, 根据能量范围得到所需要的态
-        max_energy = pam.max_energy
-        type_energy = []
-        type_num = {}
+        Ni_position = lat.Ni_position
+        Oap_position = lat.Oap_position
+        O_position = lat.O_position
+
+        Ni_num = len(Ni_position)
+        Oap_num = len(Oap_position)
+
         lookup_tbl = []
-        for state in combinations(hole_list, hole_num):
-            canonical_state, _ = make_state_canonical(state)        # 将态按一定顺序排列, 避免重复
-            state_type = get_state_type(canonical_state)
-            energy = get_atomic_energy(canonical_state, 6., 4., 4., 2.9, 3.24)
-            if (state_type, energy) not in type_energy:
-                type_energy.append((state_type, energy))
-                type_num[(state_type, energy)] = 1
-            else:
-                type_num[(state_type, energy)] += 1
-            if energy < max_energy:
-                uid = self.get_state_uid(canonical_state)
-                lookup_tbl.append(uid)
+        A = pam.A
+        Upp = pam.Upp
+        Uoo = pam.Uoo
+        ep = pam.ep_list[4]
+        eo = pam.eo_list[4]
+        # 枚举Ni的所有可能分布: (Ni0_num, Ni1_num, ...)
+        for Ni_dist in cwr((0, 1, 2, 3), Ni_num):
+            if sum(Ni_dist) > hole_num:
+                continue
+            # 层间O的数量分布
+            for Oap_dist in cwr((0, 1, 2), Oap_num):
+                other_num = hole_num - sum(Ni_dist) - sum(Oap_dist)
+                if other_num < 0:
+                    continue
+                # 层内O的数量分布
+                for O_dist in cwr((0, 1, 2), other_num):
+                    if sum(O_dist) != other_num:
+                        continue
+
+                    energy = 0
+                    # 以d8为基态能量, 其他dn比d8高 A/2 * abs(n - 2)的能量
+                    for num in Ni_dist:
+                        energy += A/2 * abs(num-2)
+                    # 除去分布中等于0的数
+                    Ni_num_dist = [num for num in Ni_dist if num != 0]
+                    Oap_num_dist = [num for num in Oap_dist if num != 0]
+                    O_num_dist = [num for num in O_dist if num != 0]
+                    # 计算Oap, O上的相互作用能和在位能
+                    for num in Oap_num_dist:
+                        energy += Uoo * num * (num - 1) / 2
+                        energy += eo * num
+                    for num in O_num_dist:
+                        energy += Upp * num * (num - 1) / 2
+                        energy += ep * num
+                    # 不考虑高能态
+                    if energy < pam.energy_range[0] or energy > pam.energy_range[1]:
+                        continue
+
+                    # 分别得到在Ni上, 层间O和层内O的空穴
+                    Ni_part = get_state_part(Ni_position, Ni_num_dist)
+                    Oap_part = get_state_part(Oap_position, Oap_num_dist)
+                    O_part = get_state_part(O_position, O_num_dist)
+
+                    # 存储三部分中的非空元组
+                    non_empty_part = [part for part in (Ni_part, Oap_part, O_part) if part]
+                    # 如果只有一部分非空, 直接输出
+                    if len(non_empty_part) == 1:
+                        for state in non_empty_part[0]:
+                            canonical_state, _ = make_state_canonical(state)
+                            uid = self.get_state_uid(canonical_state)
+                            lookup_tbl.append(uid)
+                    # 若有两部分及以上非空, 则进行笛卡尔积, 即(a, b) @ (c, d) = (a, c), (a, d), (b, c), (b, d)
+                    else:
+                        # 拼接这几部分的空穴
+                        for part1 in product(*non_empty_part):
+                            state = part1[0]
+                            for part2 in part1[1:]:
+                                state += part2
+                            canonical_state, _ = make_state_canonical(state)
+                            uid = self.get_state_uid(canonical_state)
+                            lookup_tbl.append(uid)
 
         lookup_tbl.sort()       # 一定要有这一步, 这会影响get_index函数
-        # 输出所有的类型
-        type_energy.sort(key=lambda st_e: st_e[1])
-        with open('./data/state_energy', 'w') as file:
-            for state_type, energy in type_energy:
-                num = type_num[(state_type, energy)]
-                file.write(f'{state_type}: energy = {energy}, num = {num}\n')
         t1 = time.time()
-        print('VS cost time', t1 - t0)
+        print(f'VS time {(t1-t0)//60//60}h, {(t1-t0)//60%60}min, {(t1-t0)%60}s')
+
         return lookup_tbl
 
     def get_state_uid(self, state):
@@ -306,13 +257,7 @@ class VariationalSpace:
         :param state: state = (hole1, hole2, ....)
         :return: uid, 态对应的数字
         """
-        Mc = pam.Mc
-        # 计算存储一个空穴信息需要多大的进制, 并记录在b_hole
-        b_x = 2 * Mc + 1
-        b_y = 2 * Mc + 1
-        b_z = 2 * pam.layer_num - 1
-        b_orb = pam.Norb
-        b_hole = b_x * b_y * b_z * b_orb * 2
+        b_hole = self.b_hole
 
         # 将每个空穴数字, 按b_hole进制转成一个大数
         uid = 0
@@ -329,13 +274,7 @@ class VariationalSpace:
         :param uid: 态的数字信息
         :return: state = (hole1, hole2, ....)
         """
-        Mc = pam.Mc
-        # 计算存储一个空穴信息需要多大的进制, 并记录在b_hole
-        b_x = 2 * Mc + 1
-        b_y = 2 * Mc + 1
-        b_z = 2 * pam.layer_num - 1
-        b_orb = pam.Norb
-        b_hole = b_x * b_y * b_z * b_orb * 2
+        b_hole = self.b_hole
 
         # 将大数uid按照b_hole进制, 提取每个进制上的数
         state = []
