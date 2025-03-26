@@ -1,12 +1,13 @@
+import time
 import numpy as np
 import scipy.sparse as sps
-import time
 from itertools import product
 from sympy import Rational
 from sympy.physics.quantum.cg import CG
 
 import variational_space as vs
 import lattice as lat
+
 
 def set_singlet_triplet_matrix_element(VS, state_idx, hole_idx1, hole_idx2,
                                        row, col, data, S_double_val, Sz_double_val, count_list):
@@ -73,6 +74,49 @@ def set_singlet_triplet_matrix_element(VS, state_idx, hole_idx1, hole_idx2,
             Sz_double_val[partner_idx] = 0
 
 
+def create_singlet_triplet_basis_change_matrix_d8(VS, d_state_idx, d_hole_idx):
+    """
+    对d8的单态三重态变换矩阵
+    :param VS:
+    :param d_state_idx:[state_idx1, state_idx2, ...]
+    :param d_hole_idx:[hole_idx1, hole_idx2, ...]
+    :return:
+    """
+    t0 = time.time()
+    dim = VS.dim
+    row = []
+    col = []
+    data = []
+
+    # 存储partner state的索引, 避免重复
+    count_list = []
+    # 标记该态是单态或者三重态
+    S_d8_val = {}
+    Sz_d8_val = {}
+
+    # 遍历所有的态空间
+    for i in range(dim):
+        # 不是d8的态, 变换矩阵的对角元设置为sqrt(2)(最后会除以sqrt(2))
+        if i not in d_state_idx:
+            data.append(np.sqrt(2))
+            row.append(i)
+            col.append(i)
+
+    # 遍历所有d8态
+    for i, state_idx in enumerate(d_state_idx):
+        if state_idx in count_list:
+            continue
+        # d8态中两个空穴索引
+        hole_idx1, hole_idx2 = d_hole_idx[i]
+        set_singlet_triplet_matrix_element(VS, state_idx, hole_idx1, hole_idx2,
+                                           row, col, data, S_d8_val, Sz_d8_val, count_list)
+
+    t1 = time.time()
+    print(f'singlet_triplet_d8 basis change time {(t1-t0)//60//60}h {(t1-t0)//60%60}min, {(t1-t0)%60}s')
+
+    return sps.coo_matrix((data, (row, col)), shape=(dim, dim)) / np.sqrt(2), S_d8_val, Sz_d8_val
+
+
 def create_singlet_triplet_basis_change_matrix(VS, d_state_idx, d_hole_idx, position):
     """
     单边的单态三重态变换矩阵
@@ -127,49 +171,6 @@ def create_singlet_triplet_basis_change_matrix(VS, d_state_idx, d_hole_idx, posi
     print(f'singlet_triplet_double basis change time {t1 - t0}')
 
     return sps.coo_matrix((data, (row, col)), shape=(dim, dim)) / np.sqrt(2), S_Ni_val, Sz_Ni_val
-
-
-def create_singlet_triplet_basis_change_matrix_d8(VS, d_state_idx, d_hole_idx):
-    """
-    对d8的单态三重态变换矩阵
-    :param VS:
-    :param d_state_idx:[state_idx1, state_idx2, ...]
-    :param d_hole_idx:[hole_idx1, hole_idx2, ...]
-    :return:
-    """
-    t0 = time.time()
-    dim = VS.dim
-    row = []
-    col = []
-    data = []
-
-    # 存储partner state的索引, 避免重复
-    count_list = []
-    # 标记该态是单态或者三重态
-    S_d8_val = {}
-    Sz_d8_val = {}
-
-    # 遍历所有的态空间
-    for i in range(dim):
-        # 不是d8的态, 变换矩阵的对角元设置为sqrt(2)(最后会除以sqrt(2))
-        if i not in d_state_idx:
-            data.append(np.sqrt(2))
-            row.append(i)
-            col.append(i)
-
-    # 遍历所有d8态
-    for i, state_idx in enumerate(d_state_idx):
-        if state_idx in count_list:
-            continue
-        # d8态中两个空穴索引
-        hole_idx1, hole_idx2 = d_hole_idx[i]
-        set_singlet_triplet_matrix_element(VS, state_idx, hole_idx1, hole_idx2,
-                                           row, col, data, S_d8_val, Sz_d8_val, count_list)
-
-    t1 = time.time()
-    print(f'singlet_triplet_d8 basis change time {(t1-t0)//60//60}h {(t1-t0)//60%60}min, {(t1-t0)%60}s')
-
-    return sps.coo_matrix((data, (row, col)), shape=(dim, dim)) / np.sqrt(2), S_d8_val, Sz_d8_val
 
 
 def coupling_representation(j1_list, j2_list, j1m1_list, j2m2_list, expand1_list, expand2_list):

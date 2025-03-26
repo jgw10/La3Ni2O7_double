@@ -339,4 +339,4 @@ if __name__ == '__main__':
         # phase_diagram({'tpd': (0, 4.2), 'tdo': np.linspace(0.3, 4.2, 1)}, 'tdo')
 
     t1 = time.time()
-    print(f'total time {(t1-t0)//60//60}h, {(t1-t0)//60%60}min, {(t1-t0)%60}s')
+    print('total time', t1-t0)

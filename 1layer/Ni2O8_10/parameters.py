@@ -1,22 +1,26 @@
 import numpy as np
 
 # hole_num: 空穴数目, layer_num: 层数, Norb: 轨道数目
-hole_num = 10
-layer_num = 2
-energy_range = (0, 14)  # 限制能量范围, 单位 eV
-# Sz = 'All_Sz'时, 考虑所有自旋的情况
-# Sz = '>=0'时, 考虑所有自旋>=0的情况
-Sz_list = ['All_Sz']
-# Sz_list = [0, 1, 2]
-if_basis_change_type = 'd_double'
-# 是否考虑所有空穴的耦合变换
+hole_num = 5
+layer_num = 1
+energy_range = (0, 100)  # 限制能量范围, 单位 eV
+# 是否进行全部空穴的耦合变换
 if_coupled = 0
+# 考虑所有Sz, 或者只考虑某个Sz
+Sz_list = ['All_Sz']
+# Sz_list = [0]
+# 是否考虑在Ni上方的Oap
+if_Oap = 0
+# 改变Ni2O8(Ni2O10)的晶格, 使得tpp的值是正的
+if_change_lattice = 1
+# 选择单谈三重态的变换类型
+if_basis_change_type = 'double'
+
 Norb = 5
-Mc = 2
 pressure_list = (0, 4, 8, 16, 29.5)
 
-A_list = [5, 6, 7]
-A = 6.0
+A_list = [5., 6., 7.]
+A = 6.
 B = 0.15
 C = 0.58
 Upp = 4.
@@ -41,7 +45,7 @@ tz_b1b1 = 0.047
 
 # if_tz_exist决定两层杂化的轨道
 if_tz_exist = 2
-reduce_s = 0
+
 Neval = 50
 val_num = 1
 
@@ -50,11 +54,16 @@ if Norb == 5:
     O1_orbs = ['px']
     O2_orbs = ['py']
     Oap_orbs = ['apz']
+elif Norb == 4:
+    Ni_orbs = ['d3z2r2', 'dx2y2']
+    O1_orbs = ['px']
+    O2_orbs = ['py']
+    Oap_orbs = []
 else:
-    Ni_orbs = None
-    O1_orbs = None
-    O2_orbs = None
-    Oap_orbs = None
+    Ni_orbs = []
+    O1_orbs = []
+    O2_orbs = []
+    Oap_orbs = []
 O_orbs = O1_orbs + O2_orbs
 O_orbs.sort()
 O1_orbs.sort()

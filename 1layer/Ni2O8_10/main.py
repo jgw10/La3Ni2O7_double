@@ -80,7 +80,8 @@ def state_type_weight():
     """
     df_types = {'tpd': []}
     df_orb_types = {'tpd': []}
-    for tpd in np.linspace(1.58*0.5, 1.58*1.1, num=7, endpoint=True):
+    tpd_list = np.linspace(1.58*0.5, 1.58*1.1, num=7)
+    for tpd in tpd_list:
         tdo = 1.05*tpd
         _, df = compute_Aw_main(tpd=tpd, tdo=tdo)
 
@@ -106,10 +107,12 @@ def state_type_weight():
                 df_orb_types[orb_type] = [orb_type_weight]
         df_orb_types['tpd'].append(tpd)
 
+    df_types = {key: value for key, value in df_types.items() if len(value) > len(tpd_list)}
     df_types = pd.DataFrame(df_types)
 
     df_types.to_csv('./data/state_type.csv', index=False)
 
+    df_orb_types = {key: value for key, value in df_orb_types.items() if len(value) > len(tpd_list)}
     df_orb_types = pd.DataFrame(df_orb_types)
     df_orb_types.to_csv('./data/orb_type.csv', index=False)
 
@@ -321,9 +324,12 @@ if __name__ == '__main__':
         for Ni_position, d_state_idx in multi_d_state_idx.items():
             d_hole_idx = multi_d_hole_idx[Ni_position]
             if pam.if_basis_change_type == 'd_double':
-                U_Ni, S_Ni_val, Sz_Ni_val = basis_change.create_singlet_triplet_basis_change_matrix_d8(VS, d_state_idx, d_hole_idx)
+                U_Ni, S_Ni_val, Sz_Ni_val = basis_change.create_singlet_triplet_basis_change_matrix_d8(VS, d_state_idx,
+                                                                                                       d_hole_idx)
             else:
-                U_Ni, S_Ni_val, Sz_Ni_val = basis_change.create_singlet_triplet_basis_change_matrix(VS, d_state_idx, d_hole_idx, Ni_position)
+                U_Ni, S_Ni_val, Sz_Ni_val = basis_change.create_singlet_triplet_basis_change_matrix(VS, d_state_idx,
+                                                                                                    d_hole_idx,
+                                                                                                    Ni_position)
             multi_U_Ni[Ni_position] = U_Ni
             multi_S[Ni_position] = S_Ni_val
             multi_Sz[Ni_position] = Sz_Ni_val

@@ -1,28 +1,26 @@
 import numpy as np
 
 # hole_num: 空穴数目, layer_num: 层数, Norb: 轨道数目
-hole_num = 10
+hole_num = 5
 layer_num = 2
-energy_range = (0, 14)  # 限制能量范围, 单位 eV
-# Sz = 'All_Sz'时, 考虑所有自旋的情况
-# Sz = '>=0'时, 考虑所有自旋>=0的情况
+max_energy = 100.
+# Sz = 'All_Sz'时, 考虑的所有自旋的情况
 Sz_list = ['All_Sz']
 # Sz_list = [0, 1, 2]
-if_basis_change_type = 'd_double'
-# 是否考虑所有空穴的耦合变换
+if_basis_change_type = 'double'
 if_coupled = 0
 Norb = 5
 Mc = 2
 pressure_list = (0, 4, 8, 16, 29.5)
 
-A_list = [5, 6, 7]
 A = 6.0
+A_list = [5.0, 6.0, 7.0]
 B = 0.15
 C = 0.58
-Upp = 4.
-Uoo = 4.
-Upps = [4.0]
-Uoos = [4.0]
+Upp = 4.0
+Uoo = 4.0
+# Upps = [4.0]
+# Uoos = [4.0]
 
 ed_list = ({'d3z2r2': 0.046, 'dx2y2': 0.},
            {'d3z2r2': 0.054, 'dx2y2': 0.},
@@ -41,8 +39,7 @@ tz_b1b1 = 0.047
 
 # if_tz_exist决定两层杂化的轨道
 if_tz_exist = 2
-reduce_s = 0
-Neval = 50
+Neval = 20
 val_num = 1
 
 if Norb == 5:

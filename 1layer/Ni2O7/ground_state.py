@@ -43,8 +43,6 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
         data = {'istate': [], 'state_type': [], 'orb_type': [], 'vec': [], 'weight': []}
         for istate in range(dim):
             weight = weight_average[istate]
-            if weight < 1e-8:
-                continue
             state = VS.get_state(VS.lookup_tbl[istate])
             state_type = lat.get_state_type(state)
             orb_type = lat.get_orb_type(state)
@@ -73,21 +71,21 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
         current_type = None
         current_orb_type = None
         for istate, row in df.iterrows():
-            if row['type_weight'] < 1e-5:
+            if row['type_weight'] < 0.02:
                 continue
             if row['state_type'] != current_type:
                 current_type = row['state_type']
-                print(f"{current_type} == {row['type_weight']}\n")
+                print(f"{current_type}: {row['type_weight']}\n")
 
-            if row['orb_type'] != current_orb_type:
+            if row['orb_type'] != current_orb_type and row['orb_type_weight'] > 1e-3:
                 current_orb_type = row['orb_type']
                 print(f"{current_orb_type}: {row['orb_type_weight']}\n")
 
             state = VS.get_state(VS.lookup_tbl[istate])
             weight = row['weight']
             vec = row['vec']
-            # if weight < 1e-4:
-            #     continue
+            if weight < 1e-3:
+                continue
 
             # 将态转为字符串
             state_string = []
@@ -116,6 +114,6 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
             print(f"\t{state_string}\n\t{other_string}\n\tweight = {weight}\n\tvec = {vec}\n")
 
     t1 = time.time()
-    print(f'gs time {(t1-t0)//60//60}h, {(t1-t0)//60%60}min, {(t1-t0)%60}s\n')
+    print(f'gs time {t1-t0}\n')
 
     return vals, select_df

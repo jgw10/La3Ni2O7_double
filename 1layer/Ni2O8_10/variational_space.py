@@ -174,8 +174,8 @@ def get_state_Sz(state):
 
 class VariationalSpace:
     def __init__(self, Sz):
-        self.b_hole = lat.b_x * lat.b_y * lat.b_z * pam.Norb * 2
         self.Sz = Sz
+        self.b_hole = lat.b_x * lat.b_y * lat.b_z * pam.Norb * 2
 
         self.lookup_tbl = self.create_lookup_tbl()
         self.dim = len(self.lookup_tbl)
@@ -245,15 +245,11 @@ class VariationalSpace:
                     # 如果只有一部分非空, 直接输出
                     if len(non_empty_part) == 1:
                         for state in non_empty_part[0]:
-                            # 根据输入的Sz, 确定所要计算的总自旋的z分量
+                            # 限制Sz
                             if self.Sz != 'All_Sz':
                                 Sz = get_state_Sz(state)
-                                if self.Sz == '>=0':
-                                    if Sz < 0:
-                                        continue
-                                else:
-                                    if Sz != self.Sz:
-                                        continue
+                                if Sz != self.Sz:
+                                    continue
                             canonical_state, _ = make_state_canonical(state)
                             uid = self.get_state_uid(canonical_state)
                             lookup_tbl.append(uid)
@@ -264,16 +260,11 @@ class VariationalSpace:
                             state = part1[0]
                             for part2 in part1[1:]:
                                 state += part2
-
+                            # 限制Sz
                             if self.Sz != 'All_Sz':
                                 Sz = get_state_Sz(state)
-                                if self.Sz == '>=0':
-                                    if Sz < 0:
-                                        continue
-                                else:
-                                    if Sz != self.Sz:
-                                        continue
-
+                                if Sz != self.Sz:
+                                    continue
                             canonical_state, _ = make_state_canonical(state)
                             uid = self.get_state_uid(canonical_state)
                             lookup_tbl.append(uid)
