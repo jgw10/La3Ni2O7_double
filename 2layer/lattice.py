@@ -150,6 +150,10 @@ def get_orb_type(state):
             else:
                 Oap_orb[(x, z)] = 1
         else:
+            if x < 0:
+                x = -1
+            elif x > 0:
+                x = 1
             if (x, z) in L_orb:
                 L_orb[(x, z)] += 1
             else:

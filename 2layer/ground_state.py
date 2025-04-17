@@ -43,8 +43,8 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
         data = {'istate': [], 'state_type': [], 'orb_type': [], 'vec': [], 'weight': []}
         for istate in range(dim):
             weight = weight_average[istate]
-            if weight < 1e-8:
-                continue
+            # if weight < 1e-8:
+            #     continue
             state = VS.get_state(VS.lookup_tbl[istate])
             state_type = lat.get_state_type(state)
             orb_type = lat.get_orb_type(state)
@@ -73,7 +73,7 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
         current_type = None
         current_orb_type = None
         for istate, row in df.iterrows():
-            if row['type_weight'] < 1e-5:
+            if row['type_weight'] < 1e-3 or row['orb_type_weight'] < 1e-4:
                 continue
             if row['state_type'] != current_type:
                 current_type = row['state_type']
@@ -86,8 +86,8 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
             state = VS.get_state(VS.lookup_tbl[istate])
             weight = row['weight']
             vec = row['vec']
-            # if weight < 1e-4:
-            #     continue
+            if weight < 1e-5:
+                continue
 
             # 将态转为字符串
             state_string = []

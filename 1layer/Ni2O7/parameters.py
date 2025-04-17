@@ -2,7 +2,7 @@ import numpy as np
 
 # hole_num: 空穴数目, layer_num: 层数, Norb: 轨道数目
 hole_num = 5
-layer_num = 2
+layer_num = 1
 max_energy = 100.
 # Sz = 'All_Sz'时, 考虑的所有自旋的情况
 Sz_list = ['All_Sz']

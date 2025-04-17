@@ -75,6 +75,8 @@ def get_ground_state(matrix, VS, multi_S_val, multi_Sz_val, **kwargs):
         for istate, row in df.iterrows():
             if row['type_weight'] < 0.02:
                 continue
+            if row['weight'] < 1e-3:
+                continue
             if row['state_type'] != current_type:
                 current_type = row['state_type']
                 print(f"{current_type} == {row['type_weight']}\n")

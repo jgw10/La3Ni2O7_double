@@ -11,9 +11,9 @@ Sz_list = ['All_Sz']
 # Sz_list = [0]
 # 是否考虑在Ni上方的Oap
 if_Oap = 0
-# 改变Ni2O8(Ni2O10)的晶格, 使得tpp的值是正的
+# 改变Ni2O8(Ni2O10)的晶格, 使得中间O的tpp值是正的
 if_change_lattice = 1
-# 选择单谈三重态的变换类型
+# 选择单态三重态的变换类型
 if_basis_change_type = 'double'
 
 Norb = 5
